@@ -30,25 +30,23 @@ public class ReserveController {
         return "admin/reservation-legacy";
     }
 
-    @GetMapping("/reservations")
+    @GetMapping("/reservation")
     public List<Reservation> readReserve() {
         String sql = "select r.id as reservation_id," +
                 "r.name as reservation_name," +
                 "r.date as reservation_date," +
                 "t.id as time_id," +
-                "t.start_as time_start_at" +
+                "t.start_at time_start_at" +
                 " from reservation as r " +
                 "inner join reservation_time as t" +
-                "on r.time_id = t.id";
+                " on r.time_id = t.id";
         return jdbcTemplate.query(sql,
                 (rs, rowNum) -> {
-                    Reservation reserve = new Reservation(
-                            rs.getLong("id"),
-                            rs.getString("name"),
-                            rs.getString("date"),
-                            rs.getString("time")
-                    );
-                    return reserve;
+                    long reservationId = rs.getLong("id");
+                    String name = rs.getString("name");
+                    String date = rs.getString("date");
+                    Time time = new Time(rs.getString("time"));
+                    return new Reservation(reservationId, name, date, time);
                 });
     }
 
@@ -57,20 +55,18 @@ public class ReserveController {
         String sql = "select id, name, date, time from reservation where id = ?";
         return jdbcTemplate.query(sql,
                 (rs, rowNum) -> {
-                    Reservation reserve = new Reservation(
-                            rs.getLong("id"),
-                            rs.getString("name"),
-                            rs.getString("date"),
-                            rs.getString("time")
-                    );
-                    return reserve;
+                        long reservationId = rs.getLong("id");
+                        String name = rs.getString("name");
+                        String date = rs.getString("date");
+                        Time time = new Time(rs.getString("time"));
+                    return new Reservation(reservationId, name, date, time);
                 }, id);
     }
 
     @PostMapping("/reservations")
     public void addReserve(@RequestBody Reservation reserve) {
-        String sql = "insert into reservation(name, date, time) values (?, ?, ?)";
-        jdbcTemplate.update(sql, reserve.getName(), reserve.getDate(), reserve.getTime());
+        String sql = "insert into reservation(name, date, time_id) values (?, ?, ?)";
+        jdbcTemplate.update(sql, reserve.getName(), reserve.getDate(), reserve.getId());
     }
 
     @DeleteMapping("/reservations/{id}")
@@ -79,14 +75,18 @@ public class ReserveController {
         return jdbcTemplate.update(sql, id);
     }
 
+    @GetMapping("/admin/time")
+    public String adminTime() {
+        return "admin/time";
+    }
     @PostMapping("/times")
-    public ResponseEntity<String> startTime(@RequestBody Time time) {
+    public ResponseEntity<String> addTime(@RequestBody Time time) {
         String sql = "insert into reservation_time(start_at) values ?";
         jdbcTemplate.update(sql, time.getStartAt());
         return ResponseEntity.ok().body("success");
     }
 
-    @GetMapping("/times")
+    @GetMapping("/admin/times")
     public List<Time> checkTime() {
         String sql = "select id, start_at from reservation_time";
 
@@ -98,7 +98,7 @@ public class ReserveController {
     }
 
     @DeleteMapping("/times/{id}")
-    public ResponseEntity<Void> timeDelte(@PathVariable Long id) {
+    public ResponseEntity<Void> timeDelete(@PathVariable Long id) {
         String sql = "delete from reservation_time where id = ?";
         jdbcTemplate.update(sql, id);
         return ResponseEntity.ok().build();
