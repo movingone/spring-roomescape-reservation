@@ -1,12 +1,12 @@
-package domain;
+package roomescape.domain;
 
-public class Reserve {
+public class Reservation {
     private long id;
     private String name;
     private String date;
     private Time time;
 
-    public Reserve(long id, String name, String date, Time time) {
+    public Reservation(long id, String name, String date, Time time) {
         this.id = id;
         this.name = name;
         this.date = date;
@@ -29,7 +29,7 @@ public class Reserve {
         return date;
     }
 
-    public String getTime() {
+    public Time getTime() {
         return time;
     }
 }

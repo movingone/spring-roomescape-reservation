@@ -1,19 +1,24 @@
-package controller;
+package roomescape.controller;
 
-import domain.Reserve;
-import domain.Time;
+import roomescape.domain.Reservation;
+import roomescape.domain.Time;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@org.springframework.stereotype.Controller
-public class Controller {
+@Controller
+public class ReserveController {
+
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public ReserveController(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @GetMapping("/")
     public String home() {
@@ -26,7 +31,7 @@ public class Controller {
     }
 
     @GetMapping("/reservations")
-    public List<Reserve> readReserve() {
+    public List<Reservation> readReserve() {
         String sql = "select r.id as reservation_id," +
                 "r.name as reservation_name," +
                 "r.date as reservation_date," +
@@ -37,7 +42,7 @@ public class Controller {
                 "on r.time_id = t.id";
         return jdbcTemplate.query(sql,
                 (rs, rowNum) -> {
-                    Reserve reserve = new Reserve(
+                    Reservation reserve = new Reservation(
                             rs.getLong("id"),
                             rs.getString("name"),
                             rs.getString("date"),
@@ -48,11 +53,11 @@ public class Controller {
     }
 
     @GetMapping("/reservations/{id}")
-    public List<Reserve> findReserve(@PathVariable Long id) {
+    public List<Reservation> findReserve(@PathVariable Long id) {
         String sql = "select id, name, date, time from reservation where id = ?";
         return jdbcTemplate.query(sql,
                 (rs, rowNum) -> {
-                    Reserve reserve = new Reserve(
+                    Reservation reserve = new Reservation(
                             rs.getLong("id"),
                             rs.getString("name"),
                             rs.getString("date"),
@@ -61,8 +66,9 @@ public class Controller {
                     return reserve;
                 }, id);
     }
+
     @PostMapping("/reservations")
-    public void addReserve(@RequestBody Reserve reserve) {
+    public void addReserve(@RequestBody Reservation reserve) {
         String sql = "insert into reservation(name, date, time) values (?, ?, ?)";
         jdbcTemplate.update(sql, reserve.getName(), reserve.getDate(), reserve.getTime());
     }
