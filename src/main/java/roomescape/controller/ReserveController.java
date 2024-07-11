@@ -1,5 +1,7 @@
 package roomescape.controller;
 
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import roomescape.domain.Reservation;
 import roomescape.domain.Time;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 
 @Controller
@@ -27,7 +31,7 @@ public class ReserveController {
 
     @GetMapping("/admin/reservation")
     public String adminReservation() {
-        return "admin/reservation-legacy";
+        return "admin/reservation";
     }
 
     @GetMapping("/reservation")
@@ -50,7 +54,7 @@ public class ReserveController {
                 });
     }
 
-    @GetMapping("/reservations/{id}")
+    @GetMapping("/reservation/{id}")
     public List<Reservation> findReserve(@PathVariable Long id) {
         String sql = "select id, name, date, time from reservation where id = ?";
         return jdbcTemplate.query(sql,
@@ -63,13 +67,14 @@ public class ReserveController {
                 }, id);
     }
 
-    @PostMapping("/reservations")
-    public void addReserve(@RequestBody Reservation reserve) {
+    @PostMapping("/reservation")
+    public void addReserve(@RequestBody Reservation reserve, Time time) {
+
         String sql = "insert into reservation(name, date, time_id) values (?, ?, ?)";
-        jdbcTemplate.update(sql, reserve.getName(), reserve.getDate(), reserve.getId());
+        jdbcTemplate.update(sql, reserve.getName(), reserve.getDate(), time.getId());
     }
 
-    @DeleteMapping("/reservations/{id}")
+    @DeleteMapping("/reservation/{id}")
     public int deleteReserve(@PathVariable Long id) {
         String sql = "delete from reservation where id = ?";
         return jdbcTemplate.update(sql, id);
@@ -82,7 +87,13 @@ public class ReserveController {
     @PostMapping("/times")
     public ResponseEntity<String> addTime(@RequestBody Time time) {
         String sql = "insert into reservation_time(start_at) values ?";
-        jdbcTemplate.update(sql, time.getStartAt());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, time.getStartAt());
+            return ps;
+        }, keyHolder);
+
         return ResponseEntity.ok().body("success");
     }
 
