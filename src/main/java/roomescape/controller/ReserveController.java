@@ -80,13 +80,9 @@ public class ReserveController {
         return jdbcTemplate.update(sql, id);
     }
 
-    @GetMapping("/admin/time")
-    public String adminTime() {
-        return "admin/time";
-    }
     @PostMapping("/times")
-    public ResponseEntity<String> addTime(@RequestBody Time time) {
-        String sql = "insert into reservation_time(start_at) values ?";
+    public ResponseEntity<Time> addTime(@RequestBody Time time) {
+        String sql = "insert into reservation_time (start_at) values ?";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -94,10 +90,13 @@ public class ReserveController {
             return ps;
         }, keyHolder);
 
-        return ResponseEntity.ok().body("success");
+        Long id = keyHolder.getKey().longValue();
+        time.setId(id);
+
+        return ResponseEntity.ok().body(time);
     }
 
-    @GetMapping("/admin/times")
+    @GetMapping("/admin/time")
     public List<Time> checkTime() {
         String sql = "select id, start_at from reservation_time";
 

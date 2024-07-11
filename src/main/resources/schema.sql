@@ -16,3 +16,5 @@ create table reservation
 );
 
 
+select *
+from reservation_time;
